@@ -24,7 +24,6 @@ def save_user_data():
     with open(DATA_FILE, "w") as f:
         json.dump(user_data, f, indent=4)
 
-# Adding transaction history
 def add_transaction(user_id, amount, transaction_type, recipient_id=None):
     if user_id not in user_data:
         user_data[user_id] = {
@@ -32,12 +31,11 @@ def add_transaction(user_id, amount, transaction_type, recipient_id=None):
             'invites': 0,
             'bonus': 10,
             'last_bonus_time': 0,
-            'transactions': []  # Initialize transactions list if not present
+            'transactions': []
         }
-    
     transaction = {
         "amount": amount,
-        "type": transaction_type,  # 'send', 'receive', 'withdraw', etc.
+        "type": transaction_type,
         "recipient_id": recipient_id,
         "time": time.time()
     }
@@ -62,7 +60,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'invites': 0,
             'bonus': 10,
             'last_bonus_time': 0,
-            'transactions': []  # Initialize transaction history list
+            'transactions': []
         }
         save_user_data()
 
@@ -72,12 +70,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             save_user_data()
 
     keyboard = [
-        [InlineKeyboardButton("📄 Account", callback_data='account'),
-         InlineKeyboardButton("💰 Balance", callback_data='balance')],
-        [InlineKeyboardButton("📨 Invite", callback_data='invite'),
-         InlineKeyboardButton("🎁 Bonus", callback_data='bonus')], 
-        [InlineKeyboardButton("💸 Withdraw", callback_data='withdraw'),
-         InlineKeyboardButton("❓ FAQ", callback_data='faq')]
+        [InlineKeyboardButton("\ud83d\udcc4 Account", callback_data='account'),
+         InlineKeyboardButton("\ud83d\udcb0 Balance", callback_data='balance')],
+        [InlineKeyboardButton("\ud83d\udce8 Invite", callback_data='invite'),
+         InlineKeyboardButton("\ud83c\udf81 Bonus", callback_data='bonus')], 
+        [InlineKeyboardButton("\ud83d\udcb8 Withdraw", callback_data='withdraw'),
+         InlineKeyboardButton("\u2753 FAQ", callback_data='faq')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     welcome_text = f"Hello, *{user_name}*! Welcome to the Neuro bot."
@@ -100,7 +98,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == 'account':
         text = (
-            f"👤 *Account Info:*\n"
+            f"\ud83d\udc64 *Account Info:*\n"
             f"User ID: `{user_id}`\n"
             f"Username: @{query.from_user.username or 'N/A'}\n"
             f"Balance: {data['balance']} NRO\n"
@@ -108,32 +106,31 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Bonus: {data['bonus']} NRO"
         )
         keyboard = [
-            [InlineKeyboardButton("💸 Send", callback_data='send')],
-            [InlineKeyboardButton("📅 Receive", callback_data='receive')],
-            [InlineKeyboardButton("🔙 Back", callback_data='back')]
+            [InlineKeyboardButton("\ud83d\udcb8 Send", callback_data='send')],
+            [InlineKeyboardButton("\ud83d\udcc5 Receive", callback_data='receive')],
+            [InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]
         ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'send':
-        # Asking the user to input the recipient's User ID
         context.user_data['awaiting_user_id'] = True
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='account')]]
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='account')]]
         await query.edit_message_text(
-            f"💳 আপনার ব্যালেন্স: {data['balance']} NRO\n\nযাকে সেন্ড করতে চান তার User ID দিন:",
+            f"\ud83d\udcb3 আপনার ব্যালেন্স: {data['balance']} NRO\n\nপ্রথমে যাকে সেন্ড করতে চান তার User ID লিখুন:",
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode=ParseMode.MARKDOWN
         )
 
     elif query.data == 'receive':
-        text = "📅 আপনি আপনার User ID অন্যদের শেয়ার করলে তারা আপনাকে NRO সেন্ড করতে পারবে।"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='account')]]
+        text = "\ud83d\udcc5 আপনি আপনার User ID অন্যদের শেয়ার করলে তারা আপনাকে NRO সেন্ড করতে পারবে।"
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='account')]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'balance':
-        text = f"💰 আপনার বর্তমান ব্যালেন্স: {data['balance']} NRO"
+        text = f"\ud83d\udcb0 আপনার বর্তমান ব্যালেন্স: {data['balance']} NRO"
         keyboard = [
-            [InlineKeyboardButton("🔙 Back", callback_data='back')],
-            [InlineKeyboardButton("📝 Transaction History", callback_data='transaction_history')]  # Added button here
+            [InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')],
+            [InlineKeyboardButton("\ud83d\udcdd Transaction History", callback_data='transaction_history')]
         ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
@@ -141,12 +138,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             bot_username = (await context.bot.get_me()).username
             invite_link = f"https://t.me/{bot_username}?start={user_id}"
-            text = f"📨 *Invite your friends using the link below:*\n`{invite_link}`"
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+            text = f"\ud83d\udce8 *Invite your friends using the link below:*\n`{invite_link}`"
+            keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]]
             await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
         except Exception as e:
             print(f"Error in invite handler: {e}")
-            await query.edit_message_text("❌ Failed to generate invite link.")
+            await query.edit_message_text("\u274c Failed to generate invite link.")
 
     elif query.data == 'bonus':
         now = time.time()
@@ -157,14 +154,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             data['balance'] += bonus_amount
             data['last_bonus_time'] = now
             save_user_data()
-            text = f"🎁 আপনি {bonus_amount} NRO বোনাস পেয়েছেন!\nনতুন ব্যালেন্স: {data['balance']} NRO"
+            text = f"\ud83c\udf81 আপনি {bonus_amount} NRO বোনাস প\u00e9য়েছেন!\nনতুন ব্যালেন্স: {data['balance']} NRO"
         else:
             remaining = int(BONUS_COOLDOWN - (now - last_time))
             minutes = remaining // 60
             seconds = remaining % 60
-            text = f"⏳ পরবর্তী বোনাসের জন্য অপেক্ষা করুন {minutes} মিনিট {seconds} সেকেন্ড।"
+            text = f"\u23f3 পরবর্তী বোনাসের জন্য অপেক্ষা করুন {minutes} মিনিট {seconds} সেকেন্ড।"
 
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'withdraw':
@@ -172,62 +169,74 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             withdraw_amount = data['balance']
             data['balance'] = 0
             save_user_data()
-            text = f"💸 আপনি {withdraw_amount} NRO উইথড্র করেছেন! ব্যালেন্স এখন 0।"
+            text = f"\ud83d\udcb8 আপনি {withdraw_amount} NRO উইথড্র করেছেন! ব্যালেন্স এখন 0।"
         else:
-            text = "❌ উইথড্র করার জন্য আপনার কমপক্ষে 10 ইনভাইট দরকার।"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+            text = "\u274c উইথড্র করার জন্য আপনার কমপক্ষে 10 ইনভাইট দরকার।"
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'faq':
         text = (
-            "*FAQ‼*\n\n"
-            "1. *কিভাবে বোনাস পাওয়া যায়?*\n→ 🎁 Bonus বাটনে প্রতি 2 ঘণ্টা পর ক্লিক করুন।\n\n"
-            "2. *কিভাবে টাকা তুলবো?*\n→ 10 জনকে ইনভাইট করলে Withdraw করতে পারবেন।\n\n"
-            "3. *ইনভাইট লিংক কোথায়?*\n→ 📨 Invite বাটনে ক্লিক করুন।"
+            "*FAQ\u203c\ufe0f*\n\n"
+            "1. *কিভাবে বোনাস পাওয়া যায়?*\n\u2192 \ud83c\udf81 Bonus বাটনে প্রতি 2 ঘণ্টা পর ক্লিক করুন।\n\n"
+            "2. *কিভাবে টাকা তুলবো?*\n\u2192 10 জনকে ইনভাইট করলে Withdraw করতে পারবেন।\n\n"
+            "3. *ইনভাইট লিংক কোথায়?*\n\u2192 \ud83d\udce8 Invite বাটনে ক্লিক করুন।"
         )
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
-
-    elif query.data == 'back':
-        await start(update, context)
 
     elif query.data == 'transaction_history':
         if data['transactions']:
             transaction_text = "*Transaction History:*\n\n"
-            for tx in data['transactions'][-5:]:  # Show only the last 5 transactions
+            for tx in data['transactions'][-5:]:
                 time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time']))
                 transaction_text += f"Type: {tx['type']} | Amount: {tx['amount']} NRO | Time: {time_str}\n"
         else:
             transaction_text = "No transactions yet."
-
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+        keyboard = [[InlineKeyboardButton("\ud83d\udd19 Back", callback_data='back')]]
         await query.edit_message_text(transaction_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
+
+    elif query.data == 'back':
+        await start(update, context)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    
-    # Handling the 'awaiting_user_id' state
-    if 'awaiting_user_id' in context.user_data:
-        recipient_user_id = update.message.text.strip()
+    text = update.message.text.strip()
 
-        # Validate if the recipient is a valid user
-        if recipient_user_id in user_data and recipient_user_id != user_id:
-            amount = 50  # The amount to send
-            add_transaction(user_id, amount, 'send', recipient_user_id)
-            user_data[user_id]['balance'] -= amount
-            user_data[recipient_user_id]['balance'] += amount
-            save_user_data()
-            await update.message.reply_text(f"Successfully sent {amount} NRO to user {recipient_user_id}.")
+    if context.user_data.get('awaiting_user_id'):
+        if text in user_data and text != user_id:
+            context.user_data['recipient_id'] = text
+            context.user_data['awaiting_user_id'] = False
+            context.user_data['awaiting_amount'] = True
+            await update.message.reply_text("\ud83d\udcdd কত NRO সেন্ড করতে চান? দয়া করে সংখ্যা লিখুন:")
         else:
-            await update.message.reply_text("Invalid User ID. Please provide a valid User ID.")
-        
-        del context.user_data['awaiting_user_id']  # Reset the awaiting state
-    
+            await update.message.reply_text("\u274c Invalid User ID. আবার দিন:")
+
+    elif context.user_data.get('awaiting_amount'):
+        recipient_id = context.user_data.get('recipient_id')
+        try:
+            amount = int(text)
+            if amount <= 0:
+                raise ValueError
+            if user_data[user_id]['balance'] >= amount:
+                add_transaction(user_id, amount, 'send', recipient_id)
+                user_data[user_id]['balance'] -= amount
+                user_data[recipient_id]['balance'] += amount
+                save_user_data()
+                await update.message.reply_text(f"\u2705 সফলভাবে {amount} NRO সেন্ড হয়েছে User {recipient_id}-কে!")
+            else:
+                await update.message.reply_text("\u274c আপনার ব্যালেন্সে পর্যাপ্ত NRO নেই।")
+        except ValueError:
+            await update.message.reply_text("\u274c অনুগ্রহ করে একটি সঠিক সংখ্যা লিখুন।")
+
+        context.user_data.pop('awaiting_amount', None)
+        context.user_data.pop('recipient_id', None)
+
     else:
-        await update.message.reply_text("Type /start to interact with the bot.")
+        await update.message.reply_text("\ud83e\udd16 Type /start to interact with the bot.")
 
 def main():
-    app = ApplicationBuilder().token("7999031552:AAHYe41SOElYKX19mZiU3Mpi4e_jWy-Kn4U").build()
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN_HERE").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))

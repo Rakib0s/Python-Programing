@@ -56,7 +56,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("💸 Withdraw", callback_data='withdraw'), InlineKeyboardButton("❓ FAQ", callback_data='faq')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    welcome_text = f"Hello, *{user_name}*! Welcome to the *Neuro bot*."
+    welcome_text = f"Hello, *{user_name}*! Welcome to the Neuro bot."
 
     if update.message:
         await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)

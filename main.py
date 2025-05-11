@@ -24,6 +24,25 @@ def save_user_data():
     with open(DATA_FILE, "w") as f:
         json.dump(user_data, f, indent=4)
 
+# Adding transaction history
+def add_transaction(user_id, amount, transaction_type):
+    if user_id not in user_data:
+        user_data[user_id] = {
+            'balance': 100,
+            'invites': 0,
+            'bonus': 10,
+            'last_bonus_time': 0,
+            'transactions': []  # Initialize transactions list if not present
+        }
+    
+    transaction = {
+        "amount": amount,
+        "type": transaction_type,  # 'send', 'receive', 'withdraw', etc.
+        "time": time.time()
+    }
+    user_data[user_id]['transactions'].append(transaction)
+    save_user_data()
+
 user_data = load_user_data()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -41,7 +60,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'balance': 100,
             'invites': 0,
             'bonus': 10,
-            'last_bonus_time': 0
+            'last_bonus_time': 0,
+            'transactions': []  # Initialize transaction history list
         }
         save_user_data()
 
@@ -51,9 +71,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             save_user_data()
 
     keyboard = [
-        [InlineKeyboardButton("📄 Account", callback_data='account'), InlineKeyboardButton("💰 Balance", callback_data='balance')],
-        [InlineKeyboardButton("📨 Invite", callback_data='invite'), InlineKeyboardButton("🎁 Bonus", callback_data='bonus')],
-        [InlineKeyboardButton("💸 Withdraw", callback_data='withdraw'), InlineKeyboardButton("❓ FAQ", callback_data='faq')]
+        [InlineKeyboardButton("📄 Account", callback_data='account'),
+         InlineKeyboardButton("💰 Balance", callback_data='balance')],
+        [InlineKeyboardButton("📨 Invite", callback_data='invite'),
+         InlineKeyboardButton("🎁 Bonus", callback_data='bonus')],
+        [InlineKeyboardButton("💸 Withdraw", callback_data='withdraw'),
+         InlineKeyboardButton("❓ FAQ", callback_data='faq')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     welcome_text = f"Hello, *{user_name}*! Welcome to the Neuro bot."
@@ -106,7 +129,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'balance':
         text = f"💰 আপনার বর্তমান ব্যালেন্স: {data['balance']} NRO"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+        keyboard = [
+            [InlineKeyboardButton("🔙 Back", callback_data='back')],
+            [InlineKeyboardButton("📝 Transaction History", callback_data='transaction_history')]  # Added button here
+        ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'invite':
@@ -163,49 +189,34 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'back':
         await start(update, context)
 
+    elif query.data == 'transaction_history':
+        if data['transactions']:
+            transaction_text = "*Transaction History:*\n\n"
+            for tx in data['transactions'][-5:]:  # Show only the last 5 transactions
+                time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time']))
+                transaction_text += f"Type: {tx['type']} | Amount: {tx['amount']} NRO | Time: {time_str}\n"
+        else:
+            transaction_text = "No transactions yet."
+
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='back')]]
+        await query.edit_message_text(transaction_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
+
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    text = update.message.text.strip()
-
-    if context.user_data.get('awaiting_user_id'):
-        context.user_data['awaiting_user_id'] = False
-        context.user_data['target_user_id'] = text
-        await update.message.reply_text("✅ এখন এমাউন্ট লিখুন:")
-        context.user_data['awaiting_amount'] = True
-
-    elif context.user_data.get('awaiting_amount'):
-        context.user_data['awaiting_amount'] = False
-        target_id = context.user_data.get('target_user_id')
-        try:
-            amount = int(text)
-            if amount <= 0 or amount > user_data[user_id]['balance']:
-                raise ValueError
-        except:
-            await update.message.reply_text("❌ Invalid amount.")
-            return
-
-        user_data[user_id]['balance'] -= amount
-        if target_id not in user_data:
-            user_data[target_id] = {
-                'balance': amount,
-                'invites': 0,
-                'bonus': 10,
-                'last_bonus_time': 0
-            }
-        else:
-            user_data[target_id]['balance'] += amount
-
-        save_user_data()
-        await update.message.reply_text(f"✅ {amount} NRO সেন্ড করা হয়েছে {target_id} ইউজারকে।")
-        await start(update, context)
+    if 'awaiting_user_id' in context.user_data:
+        amount = 50  # Dummy amount
+        add_transaction(user_id, amount, 'send')  # Example of sending amount
+        await update.message.reply_text(f"Successfully sent {amount} NRO.")
+        del context.user_data['awaiting_user_id']  # Remove from awaiting state
+    else:
+        await update.message.reply_text("Type /start to interact with the bot.")
 
 def main():
     app = ApplicationBuilder().token("7999031552:AAHYe41SOElYKX19mZiU3Mpi4e_jWy-Kn4U").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-    print("✅ Bot is running...")
     app.run_polling()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

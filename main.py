@@ -25,7 +25,7 @@ def save_user_data():
         json.dump(user_data, f, indent=4)
 
 # Adding transaction history
-def add_transaction(user_id, amount, transaction_type):
+def add_transaction(user_id, amount, transaction_type, recipient_id=None):
     if user_id not in user_data:
         user_data[user_id] = {
             'balance': 100,
@@ -38,6 +38,7 @@ def add_transaction(user_id, amount, transaction_type):
     transaction = {
         "amount": amount,
         "type": transaction_type,  # 'send', 'receive', 'withdraw', etc.
+        "recipient_id": recipient_id,
         "time": time.time()
     }
     user_data[user_id]['transactions'].append(transaction)
@@ -74,7 +75,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📄 Account", callback_data='account'),
          InlineKeyboardButton("💰 Balance", callback_data='balance')],
         [InlineKeyboardButton("📨 Invite", callback_data='invite'),
-         InlineKeyboardButton("🎁 Bonus", callback_data='bonus')],
+         InlineKeyboardButton("🎁 Bonus", callback_data='bonus')], 
         [InlineKeyboardButton("💸 Withdraw", callback_data='withdraw'),
          InlineKeyboardButton("❓ FAQ", callback_data='faq')]
     ]
@@ -114,6 +115,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
     elif query.data == 'send':
+        # Asking the user to input the recipient's User ID
         context.user_data['awaiting_user_id'] = True
         keyboard = [[InlineKeyboardButton("🔙 Back", callback_data='account')]]
         await query.edit_message_text(
@@ -203,11 +205,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+    
+    # Handling the 'awaiting_user_id' state
     if 'awaiting_user_id' in context.user_data:
-        amount = 50  # Dummy amount
-        add_transaction(user_id, amount, 'send')  # Example of sending amount
-        await update.message.reply_text(f"Successfully sent {amount} NRO.")
-        del context.user_data['awaiting_user_id']  # Remove from awaiting state
+        recipient_user_id = update.message.text.strip()
+
+        # Validate if the recipient is a valid user
+        if recipient_user_id in user_data and recipient_user_id != user_id:
+            amount = 50  # The amount to send
+            add_transaction(user_id, amount, 'send', recipient_user_id)
+            user_data[user_id]['balance'] -= amount
+            user_data[recipient_user_id]['balance'] += amount
+            save_user_data()
+            await update.message.reply_text(f"Successfully sent {amount} NRO to user {recipient_user_id}.")
+        else:
+            await update.message.reply_text("Invalid User ID. Please provide a valid User ID.")
+        
+        del context.user_data['awaiting_user_id']  # Reset the awaiting state
+    
     else:
         await update.message.reply_text("Type /start to interact with the bot.")
 
